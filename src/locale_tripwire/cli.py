@@ -35,6 +35,14 @@ class JSONObject:
     pairs: list[tuple[str, Any]]
 
 
+class NonStandardJSONConstant(ValueError):
+    """Raised for Python-only JSON constants such as NaN."""
+
+
+def reject_constant(value: str) -> None:
+    raise NonStandardJSONConstant(f"non-standard JSON constant: {value}")
+
+
 def inspect_pairs(pairs: list[tuple[str, Any]], location: str, findings: list[dict[str, str]]) -> None:
     seen_exact: set[str] = set()
     seen: dict[str, dict[str, str]] = {rule: {} for rule in ("nfc", "casefold", "tr-lower")}
@@ -50,17 +58,16 @@ def inspect_pairs(pairs: list[tuple[str, Any]], location: str, findings: list[di
                 seen[rule][folded] = key
 
 
-
 def inspect_json(source: str) -> list[dict[str, str]]:
     findings: list[dict[str, str]] = []
-    parsed = json.loads(source, object_pairs_hook=JSONObject)
+    parsed = json.loads(source, object_pairs_hook=JSONObject, parse_constant=reject_constant)
 
     def walk(node: Any, location: str) -> None:
         if isinstance(node, JSONObject):
             pairs = node.pairs
             inspect_pairs(pairs, location, findings)
             for key, child in pairs:
-                walk(child, f"{location}.{key}" if location else key)
+                walk(child, f"{location}[{json.dumps(key, ensure_ascii=True)}]")
         elif isinstance(node, list):
             for index, child in enumerate(node):
                 walk(child, f"{location}[{index}]")
@@ -82,11 +89,11 @@ def main(argv: list[str] | None = None) -> int:
             source = path.read_text(encoding="utf-8")
             for finding in inspect_json(source):
                 findings.append({"file": str(path), **finding})
-        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        except (OSError, UnicodeError, json.JSONDecodeError, NonStandardJSONConstant) as exc:
             errors.append(f"{path}: {exc}")
 
     if args.format == "json":
-        print(json.dumps({"findings": findings, "errors": errors}, ensure_ascii=False, indent=2))
+        print(json.dumps({"findings": findings, "errors": errors}, ensure_ascii=True, indent=2))
     else:
         for item in findings:
             print(f"{item['file']}:{item['path']}: {item['rule']}: {item['first']!r} <> {item['second']!r}")

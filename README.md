@@ -29,7 +29,7 @@ Example input:
 
 This pair triggers the `tr-lower` rule. `{"Name": 1, "name": 2}` triggers `casefold`. Distinct spellings of `café` using composed and decomposed characters trigger `nfc`. A pair may appear under more than one rule.
 
-Exit codes: `0` no findings, `1` one or more collisions, `2` unreadable or invalid input. JSON output includes `findings` and `errors`, so CI can consume it without parsing human text. Paths point to the containing JSON object, including array indexes.
+Exit codes: `0` no findings, `1` one or more collisions, `2` unreadable or invalid input (including non-standard `NaN`/`Infinity`). JSON output includes `findings` and `errors`, so CI can consume it without parsing human text. Paths point to the containing JSON object using unambiguous bracket notation, for example `$["items"][0]`.
 
 ## What the result means
 

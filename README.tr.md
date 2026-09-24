@@ -29,7 +29,7 @@ locale-tripwire --format json messages.json config.json
 
 Bu çift `tr-lower` kuralıyla işaretlenir. `{"Name": 1, "name": 2}` ise `casefold` kuralıyla yakalanır. `café` sözcüğünün birleşik ve ayrışık Unicode yazımları `nfc` kuralına takılır. Aynı çift birden fazla kuralda görünebilir.
 
-Çıkış kodları: `0` bulgu yok, `1` çakışma var, `2` dosya okunamadı veya JSON geçersiz. `--format json` çıktısı `findings` ve `errors` alanlarını içerir; CI için uygundur. Raporlanan yol, dizi indeksleri dâhil, anahtarların bulunduğu JSON nesnesini gösterir.
+Çıkış kodları: `0` bulgu yok, `1` çakışma var, `2` dosya okunamadı veya JSON geçersiz (`NaN`/`Infinity` dâhil). `--format json` çıktısı `findings` ve `errors` alanlarını içerir; CI için uygundur. Raporlanan yol, dizi indeksleri dâhil, anahtarların bulunduğu JSON nesnesini köşeli parantez gösterimiyle belirtir; örnek: `$["items"][0]`.
 
 ## Bulguyu nasıl yorumlamalı?
 
