@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "locale-tripwire"
+version = "0.1.0"
+description = "Detect Unicode key collisions in JSON documents"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{name = "GreedyC"}]
+
+[project.scripts]
+locale-tripwire = "locale_tripwire.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
