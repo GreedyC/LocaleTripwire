@@ -1,7 +1,9 @@
 # Distribution and CI integration plan
 
-Status: planned, not implemented. The CLI features in the current commit are ready
-for local use; packaging publication and integrations remain separate work.
+Status: installation verification scripts, pre-commit hook, GitHub annotations and
+the six-job cross-platform CI workflow are implemented. The usage guide is
+[ci-usage.md](ci-usage.md). Actual runner results must be checked at the pushed
+commit before release; PyPI publication still requires owner-side setup.
 
 ## Goal
 
@@ -53,11 +55,10 @@ custom GitHub Action to maintain. Preserve rule selection, severity and exit cod
 - English/Turkish docs match the tested commands; changelog explains additive JSON
   fields and backward-compatible default severities.
 
-## Suggested order for the next session
+## Remaining release steps
 
-1. Build/install validation and pre-commit hook.
-2. Full cross-platform CI verification.
-3. Safe annotation example and release documentation.
-4. Owner-configured publishing, version/tag and release only after checks pass.
+1. Check the pushed commit's full cross-platform CI; repair any failed job.
+2. Have the owner configure the PyPI project and Trusted Publisher.
+3. Select the release version, create a tag and publish only after checks pass.
 
-No scheduled task or publication is created by this document.
+No scheduled task or PyPI publication is created by this document.

@@ -8,6 +8,10 @@ Sorun somut: [yinelenen anahtarlar çeviri dosyasının içe aktarımını bozab
 
 ## Kurulum
 
+İzole `pipx`/virtualenv kurulumu, pre-commit ve güvenli GitHub Actions raporları için
+[kurulum ve otomasyon rehberine](docs/ci-usage.md) bakın. PyPI yayını henüz doğrulanmış
+değil; belirli bir repo revizyonundan kurun. macOS, Linux ve Windows desteklenir.
+
 Python 3.10 veya üzeri gerekir. Bu repo içindeyken:
 
 ```sh
@@ -58,6 +62,10 @@ Metin çıktısında ASCII dışı ve kontrol karakterleri kaçırılır; Window
 JSON çıktısındaki `findings`, `errors` ve bulguların `file`, `path`, `rule`, `first`,
 `second` alanları korunur. Yeni alanlar: `severity`, `first_position`, `second_position`
 (`line` ve `column` içerir), `first_codepoints`, `second_codepoints`, `transformed`.
+
+`--format github`, kaçış uygulanmış GitHub Actions hata/uyarılarını üretir.
+Konumlar varsayılan olarak çalışma klasörüne göre raporlanır; gerekirse
+`--annotation-root YOL` kullanın.
 
 ### Klasör tarama
 

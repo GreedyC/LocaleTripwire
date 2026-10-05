@@ -6,10 +6,49 @@ import unittest
 from unittest.mock import patch
 from pathlib import Path
 
-from locale_tripwire.cli import collect_files, inspect_json, main
+from locale_tripwire.cli import collect_files, github_annotation, inspect_json, main, workflow_escape
 
 
 class CollisionTests(unittest.TestCase):
+    def test_workflow_command_escaping(self):
+        self.assertEqual(workflow_escape("%,:\r\n", property_value=True), "%25%2C%3A%0D%0A")
+        self.assertEqual(workflow_escape("%\r\n::error::fake"), "%25%0D%0A::error::fake")
+
+    def test_github_annotation_has_relative_location(self):
+        root = Path.cwd()
+        finding = {"file": str(root / "a%,b.json"),
+                   **inspect_json('{"a":1,"a":2}', ("duplicate",))[0]}
+        annotation = github_annotation(finding, root)
+        self.assertTrue(annotation.startswith("::error file=a%25%2Cb.json,line=1,col=8::"))
+        self.assertIn("first key at 1:2", annotation)
+
+    def test_github_annotation_omits_external_file(self):
+        root = Path.cwd() / "child"
+        finding = {"file": str(Path.cwd() / "a.json"),
+                   **inspect_json('{"a":1,"a":2}', ("duplicate",))[0]}
+        annotation = github_annotation(finding, root)
+        self.assertTrue(annotation.startswith("::error::"))
+        self.assertIn("outside annotation root", annotation)
+
+    def test_github_output_cannot_inject_extra_commands(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "a.json"
+            key = "\n::error::pretend%"
+            path.write_text('{' + json.dumps(key) + ':1,' + json.dumps(key) + ':2}', encoding="utf-8")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(main([str(path), "--rules", "duplicate", "--severity", "duplicate=warning",
+                                       "--format", "github", "--annotation-root", folder]), 0)
+            self.assertEqual(len(output.getvalue().splitlines()), 1)
+            self.assertTrue(output.getvalue().startswith("::warning file=a.json,line=1,"))
+            self.assertIn("%25", output.getvalue())
+
+    def test_github_input_errors_are_annotations(self):
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            self.assertEqual(main(["missing.json", "--format", "github"]), 2)
+        self.assertTrue(output.getvalue().startswith("::error::"))
+
     def test_exact_duplicate(self):
         self.assertIn("duplicate", [x["rule"] for x in inspect_json('{"name": 1, "name": 2}')])
 

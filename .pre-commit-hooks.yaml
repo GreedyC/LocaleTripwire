@@ -1,0 +1,7 @@
+- id: locale-tripwire
+  name: LocaleTripwire JSON key check
+  description: Detect duplicate JSON keys; opt into consumer-specific Unicode rules.
+  entry: locale-tripwire
+  language: python
+  types: [json]
+  args: [--rules, duplicate]

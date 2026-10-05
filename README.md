@@ -8,6 +8,10 @@ The practical problem is real: [duplicate keys can break translation-file import
 
 ## Install
 
+For isolated `pipx`/virtualenv installation, pre-commit and safe GitHub Actions
+annotations, see [installation and automation](docs/ci-usage.md). PyPI publication
+is not yet verified; install from a checked-out revision.
+
 Python 3.10 or later is required. From this repository:
 
 ```sh
@@ -58,6 +62,9 @@ JSON output retains `findings` and `errors`, and each finding's `file`, `path`, 
 `first`, and `second`. Additive fields are `severity`, `first_position`,
 `second_position` (each with `line` and `column`), `first_codepoints`,
 `second_codepoints`, and `transformed`.
+
+`--format github` emits escaped GitHub Actions annotations. The default annotation
+root is the current directory; use `--annotation-root PATH` when needed.
 
 ### Directory scanning
 

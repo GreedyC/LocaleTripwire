@@ -194,10 +194,36 @@ def collect_files(
     return files, errors
 
 
+def workflow_escape(value: str, *, property_value: bool = False) -> str:
+    """Escape GitHub workflow commands, including untrusted paths and messages."""
+    value = value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    if property_value:
+        value = value.replace(":", "%3A").replace(",", "%2C")
+    return value
+
+
+def github_annotation(item: dict[str, Any], root: Path) -> str:
+    message = (f"{item['rule']} at {item['path']}: {ascii(item['first'])} <> "
+               f"{ascii(item['second'])}; first key at "
+               f"{item['first_position']['line']}:{item['first_position']['column']}; "
+               f"shared transformed key {ascii(item['transformed'])}")
+    properties = ""
+    try:
+        relative = Path(item["file"]).resolve().relative_to(root.resolve())
+        position = item["second_position"]
+        properties = (f" file={workflow_escape(relative.as_posix(), property_value=True)},"
+                      f"line={position['line']},col={position['column']}")
+    except (ValueError, OSError, RuntimeError):
+        message = f"{ascii(item['file'])}: {message} (outside annotation root)"
+    return f"::{item['severity']}{properties}::{workflow_escape(message)}"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Find JSON keys that collide after Unicode normalization or case conversion.")
     parser.add_argument("files", nargs="+", type=Path, help="JSON files or directories to inspect")
-    parser.add_argument("--format", choices=("text", "json"), default="text")
+    parser.add_argument("--format", choices=("text", "json", "github"), default="text")
+    parser.add_argument("--annotation-root", type=Path, default=Path.cwd(),
+                        help="Repository root for GitHub file annotations (default: current directory)")
     parser.add_argument("--rules", default=",".join(RULES), help="Comma-separated rules: " + ", ".join(RULES))
     parser.add_argument("--severity", action="append", default=[], metavar="RULE=LEVEL",
                         help="Set a rule to error or warning; repeat for multiple rules")
@@ -229,6 +255,16 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.format == "json":
         print(json.dumps({"findings": findings, "errors": errors}, ensure_ascii=True, indent=2))
+    elif args.format == "github":
+        # Actions consume UTF-8, even when Windows' redirected console uses cp1252.
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+        for item in findings:
+            print(github_annotation(item, args.annotation_root))
+        for error in errors:
+            print("::error::" + workflow_escape(ascii(error)))
+        if not findings and not errors:
+            print("No key collisions found.")
     else:
         for item in findings:
             first, second = item["first_position"], item["second_position"]

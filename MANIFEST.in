@@ -1,0 +1,4 @@
+include LICENSE README.md README.tr.md .pre-commit-hooks.yaml
+recursive-include tests *.py
+recursive-include scripts *.py
+recursive-include docs *.md
