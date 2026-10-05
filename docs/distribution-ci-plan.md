@@ -1,7 +1,7 @@
 # Distribution and CI integration plan
 
 Status: installation verification scripts, pre-commit hook, GitHub annotations and
-the six-job cross-platform CI workflow are implemented. The usage guide is
+the six-job cross-platform CI workflow and manual OIDC publisher are implemented. The usage guide is
 [ci-usage.md](ci-usage.md). Actual runner results must be checked at the pushed
 commit before release; PyPI publication still requires owner-side setup.
 
@@ -59,6 +59,7 @@ custom GitHub Action to maintain. Preserve rule selection, severity and exit cod
 
 1. Check the pushed commit's full cross-platform CI; repair any failed job.
 2. Have the owner configure the PyPI project and Trusted Publisher.
-3. Select the release version, create a tag and publish only after checks pass.
+3. Select the release version, create a matching immutable tag, then dispatch
+   `publish.yml`. It re-runs the six jobs before allowing a separate publishing job.
 
 No scheduled task or PyPI publication is created by this document.

@@ -87,3 +87,16 @@ The repository workflow builds wheel/sdist, runs `twine check`, installs both
 artifacts into clean environments and tests the real hook. All six combinations
 of Linux/macOS/Windows and Python 3.10/3.14 must pass before release. See
 [distribution-ci-plan.md](distribution-ci-plan.md) for the PyPI owner-setup gate.
+
+The manual `publish.yml` workflow is prepared but has not been dispatched. It
+re-runs all six verification jobs for the selected tag, verifies the immutable
+tag matches the package version, builds/checks artifacts, then publishes in a
+separate `pypi` environment using OIDC. It does not use a long-lived API token.
+
+For a first publication, the PyPI account owner must configure a pending publisher:
+project `locale-tripwire`, owner `GreedyC`, repository `LocaleTripwire`, workflow
+`publish.yml`, environment `pypi`. GitHub environment approval protections are
+recommended. See [PyPI's first-project guide](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/).
+Only after that setup should the owner choose/tag a version and dispatch publication.
+The publisher currently accepts stable `vMAJOR.MINOR.PATCH` tags only. A 404 from
+PyPI does not guarantee the name is available or reserved for this account.
