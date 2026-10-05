@@ -19,6 +19,9 @@ python3 -m pip install -e .
 ```sh
 locale-tripwire messages.json
 locale-tripwire --format json messages.json config.json
+locale-tripwire locales/ --exclude generated --exclude 'drafts/*.json'
+locale-tripwire locales/ --rules duplicate,nfc --severity nfc=warning
+locale-tripwire locales/ --rules casefold --severity casefold=warning --fail-on warning
 ```
 
 Örnek JSON:
@@ -29,7 +32,46 @@ locale-tripwire --format json messages.json config.json
 
 Bu çift `tr-lower` kuralıyla işaretlenir. `{"Name": 1, "name": 2}` ise `casefold` kuralıyla yakalanır. `café` sözcüğünün birleşik ve ayrışık Unicode yazımları `nfc` kuralına takılır. Aynı çift birden fazla kuralda görünebilir.
 
-Çıkış kodları: `0` bulgu yok, `1` çakışma var, `2` dosya okunamadı veya JSON geçersiz (`NaN`/`Infinity` dâhil). `--format json` çıktısı `findings` ve `errors` alanlarını içerir; CI için uygundur. Raporlanan yol, dizi indeksleri dâhil, anahtarların bulunduğu JSON nesnesini köşeli parantez gösterimiyle belirtir; örnek: `$["items"][0]`.
+### Kural seçimi ve uyarı seviyeleri
+
+`--rules`, `duplicate,nfc,casefold,tr-lower` listesinden virgülle ayrılmış kuralları
+seçer. Geriye uyumluluk için varsayılan olarak bütün kurallar `error` seviyesindedir.
+Tekrarlanabilen `--severity KURAL=warning` veya `KURAL=error` ile etkin kuralların
+seviyesini değiştirebilirsiniz. Uyarılar raporlanır ama yalnız `--fail-on warning`
+verildiğinde komutu başarısız yapar. JSON anahtarlarını birebir karşılaştıran
+uygulamalarda `--rules duplicate` ile başlayın; diğer dönüşümler tüketici uygulamanızda
+gerçekten kullanılıyorsa ilgili kuralları açın.
+
+Çıkış kodları: `0` başarısızlık eşiğinde bulgu yok, `1` eşikte bulgu var,
+`2` okunamayan/geçersiz girdi (`NaN`/`Infinity` dâhil) veya eşleşen dosya bulunmayan
+klasör. Girdi hatası, bulgulara göre önceliklidir. Geçersiz seçenekler de `2` döndürür.
+
+### Açıklayıcı rapor
+
+Her bulguda nesne yolu (ör. `$["items"][0]`), iki anahtarın açılış tırnağının konumu,
+Unicode kod noktaları/adları ve dönüşüm sonrasındaki ortak anahtar gösterilir.
+Satır ve sütunlar **1 tabanlı karakter konumlarıdır**, bayt konumu değildir.
+Kaçış dizisi içeren anahtarlar kaynak metindeki açılış tırnağına işaret eder.
+Metin çıktısında ASCII dışı ve kontrol karakterleri kaçırılır; Windows'ta yönlendirilmiş
+çıktıda da güvenle okunabilir.
+
+JSON çıktısındaki `findings`, `errors` ve bulguların `file`, `path`, `rule`, `first`,
+`second` alanları korunur. Yeni alanlar: `severity`, `first_position`, `second_position`
+(`line` ve `column` içerir), `first_codepoints`, `second_codepoints`, `transformed`.
+
+### Klasör tarama
+
+Klasörler alt klasörleriyle, sabit sırada `*.json` dosyaları için taranır.
+Tekrarlanan `--include GLOB` seçenekleri varsayılan dosya desenini değiştirir.
+`--exclude GLOB` ile dosya/klasör adını veya kök klasöre göre yolu hariç tutabilirsiniz.
+Desenleri tırnak içinde yazın. Eşleşme her platformda büyük/küçük harfe duyarlıdır;
+yol ayırıcı `/` kullanılır. Python `fnmatch` kuralları geçerlidir, gitignore değildir;
+`*`, `/` karakteriyle de eşleşebilir. Hariç tutulan klasörün tamamı atlanır.
+
+Klasör keşfinde `.git`, `node_modules`, `.venv`, `venv`, `__pycache__` ve sembolik
+bağlantılar daima atlanır. Aynı dosyaya giden girdiler tekilleştirilir. Doğrudan
+verilen dosyalar filtrelerden bağımsız incelenir ve sembolik bağlantı olabilir;
+doğrudan verilen klasörler her zaman taranır. Girdi dosyaları değiştirilmez.
 
 ## Bulguyu nasıl yorumlamalı?
 

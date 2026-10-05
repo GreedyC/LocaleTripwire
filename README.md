@@ -19,6 +19,9 @@ python3 -m pip install -e .
 ```sh
 locale-tripwire messages.json
 locale-tripwire --format json messages.json config.json
+locale-tripwire locales/ --exclude generated --exclude 'drafts/*.json'
+locale-tripwire locales/ --rules duplicate,nfc --severity nfc=warning
+locale-tripwire locales/ --rules casefold --severity casefold=warning --fail-on warning
 ```
 
 Example input:
@@ -29,7 +32,46 @@ Example input:
 
 This pair triggers the `tr-lower` rule. `{"Name": 1, "name": 2}` triggers `casefold`. Distinct spellings of `café` using composed and decomposed characters trigger `nfc`. A pair may appear under more than one rule.
 
-Exit codes: `0` no findings, `1` one or more collisions, `2` unreadable or invalid input (including non-standard `NaN`/`Infinity`). JSON output includes `findings` and `errors`, so CI can consume it without parsing human text. Paths point to the containing JSON object using unambiguous bracket notation, for example `$["items"][0]`.
+### Rules and severity
+
+`--rules` selects a comma-separated subset of `duplicate,nfc,casefold,tr-lower`.
+All rules remain enabled at `error` severity by default for backward compatibility.
+Use repeatable `--severity RULE=warning` or `RULE=error` overrides for enabled rules.
+Warnings are still reported but do not fail the command unless `--fail-on warning`
+is set. For consumers that compare JSON keys exactly, start with `--rules duplicate`;
+enable other rules only when their transformations matter to your consumer.
+
+Exit codes: `0` no findings at the failure threshold, `1` findings at the threshold,
+`2` unreadable or invalid input (including non-standard `NaN`/`Infinity`) or a directory
+with no matching files. Input errors take precedence over findings. Invalid options
+also exit with `2`.
+
+### Actionable diagnostics
+
+Each finding reports the containing object path (for example `$["items"][0]`),
+both keys' opening-quote positions, Unicode code points and names, and the shared
+transformed key. Lines and columns are **1-based character positions**, not byte
+offsets; an escaped key points to its original opening quote. Text diagnostics escape
+non-ASCII/control characters to work in redirected terminals, including Windows.
+
+JSON output retains `findings` and `errors`, and each finding's `file`, `path`, `rule`,
+`first`, and `second`. Additive fields are `severity`, `first_position`,
+`second_position` (each with `line` and `column`), `first_codepoints`,
+`second_codepoints`, and `transformed`.
+
+### Directory scanning
+
+Directories are searched recursively and deterministically for `*.json` files.
+Repeat `--include GLOB` to replace that default with your own file patterns.
+Repeat `--exclude GLOB` to omit entries by basename or root-relative path.
+Quote globs so your shell does not expand them. Matching is case-sensitive on every
+platform, uses forward-slash paths, and follows Python `fnmatch` semantics (not gitignore;
+`*` can match `/`). Excluding a directory prunes its entire subtree.
+
+`.git`, `node_modules`, `.venv`, `venv`, and `__pycache__` are always skipped during
+directory discovery, as are symlinks. Overlapping inputs are deduplicated by resolved
+path. Explicit file inputs bypass include/exclude filters and can be symlinks;
+explicit directory inputs are always scanned. Files are never modified.
 
 ## What the result means
 
