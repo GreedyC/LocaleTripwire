@@ -13,6 +13,15 @@ pipx install .
 locale-tripwire --help
 ```
 
+Or install the published integration commit directly, without cloning (shell
+quotes work in Bash and PowerShell; use double quotes in Windows cmd.exe):
+
+```sh
+pipx install 'git+https://github.com/GreedyC/LocaleTripwire.git@a38f14bcbf604c9119d69595fd54320399be97e6'
+```
+
+This is a pinned Git installation, not a PyPI release. Git must be installed.
+
 Or create a virtual environment with `python -m venv .venv`, then use
 `.venv/bin/python -m pip install .` on macOS/Linux or
 `.venv\Scripts\python.exe -m pip install .` on Windows. The command lives in the
@@ -24,12 +33,12 @@ a wheel built from that revision instead.
 
 ## pre-commit
 
-Use an immutable commit or published tag that contains `.pre-commit-hooks.yaml`:
+The following immutable commit contains `.pre-commit-hooks.yaml`:
 
 ```yaml
 repos:
   - repo: https://github.com/GreedyC/LocaleTripwire
-    rev: REPLACE_WITH_VERIFIED_COMMIT_OR_TAG
+    rev: a38f14bcbf604c9119d69595fd54320399be97e6
     hooks:
       - id: locale-tripwire
         # Default: duplicate only. Enable additional consumer-specific rules:
@@ -44,7 +53,7 @@ but succeed unless `--fail-on warning` is added.
 
 ## GitHub Actions
 
-This example installs an audited Git revision; replace the placeholder before use.
+This example installs the same pinned Git revision.
 The consuming repository must contain the `locales/` directory and matching files.
 
 ```yaml
@@ -60,7 +69,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.14'
-      - run: python -m pip install 'git+https://github.com/GreedyC/LocaleTripwire.git@REPLACE_WITH_VERIFIED_COMMIT'
+      - run: python -m pip install 'git+https://github.com/GreedyC/LocaleTripwire.git@a38f14bcbf604c9119d69595fd54320399be97e6'
       - run: locale-tripwire locales/ --rules duplicate,nfc --severity nfc=warning --format github
 ```
 
