@@ -65,8 +65,8 @@ jobs:
   keys:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.0.0
         with:
           python-version: '3.14'
       - run: python -m pip install 'git+https://github.com/GreedyC/LocaleTripwire.git@a38f14bcbf604c9119d69595fd54320399be97e6'

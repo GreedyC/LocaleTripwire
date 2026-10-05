@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 import re
 import subprocess
-import tomllib
 
 
 def validate_tag(tag: str, version: str) -> None:
@@ -16,6 +15,7 @@ def validate_tag(tag: str, version: str) -> None:
 
 
 def main() -> None:
+    import tomllib  # release runner uses Python 3.14; helpers also test on 3.10
     repo = Path(__file__).resolve().parents[1]
     metadata = tomllib.loads((repo / "pyproject.toml").read_text(encoding="utf-8"))
     tag = os.environ.get("RELEASE_TAG", "")
